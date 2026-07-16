@@ -1,6 +1,7 @@
 import asyncio
 from bleak import BleakClient, BleakScanner
-from bleak.backends.characteristic import BleakGATTCharacteristic
+from bleak.backends.device import BLEDevice
+from bleak.exc import BleakDeviceNotFoundError
 from websockets.asyncio.server import ServerConnection, serve
 
 HEART_RATE_UUID = "00002a37-0000-1000-8000-00805f9b34fb";
@@ -10,38 +11,48 @@ scanner = BleakScanner(service_uuids=[HEART_RATE_UUID]);
 global heart_rate;
 heart_rate = -1;
 
-# print(scanner.backend_id);
+async def find_device(skip_existing: bool) -> BLEDevice | str:
+    if not skip_existing:
+        return "D9:BE:F4:B9:29:0A"; # TODO: read from file
 
-def heartrateCallback(sender: BleakGATTCharacteristic, data: bytearray):
-    print(f"{sender}: {data}")
+    print("scanning for device!");
+
+    foundDevice = None;
+    while foundDevice == None:
+        foundDevice = await scanner.find_device_by_name("InfiniTime");
+
+    return foundDevice;
 
 async def connect() -> BleakClient:
     device = None;
 
     while device == None:
-        # TODO: fallback to this if bleak.exc.BleakDeviceNotFoundError happens
-        # foundDevice = None;
-        # while foundDevice == None:
-        #     foundDevice = await scanner.find_device_by_name("InfiniTime");
-        #     print(foundDevice);
-        foundDevice = "D9:BE:F4:B9:29:0A";
+        foundDevice = await find_device(False);
 
         device = BleakClient(foundDevice);
 
         tries = 0;
         while not device.is_connected:
-            if tries > 0:
-                print("disconnecting");
-                await device.disconnect();
-            if tries > 1:
-                print("unpairing");
-                await device.unpair();
-            if tries > 5:
-                print("waiting 5 seconds")
-                await asyncio.sleep(5);
+            try:
+                if tries > 0:
+                    print("disconnecting");
+                    await device.disconnect();
+                if tries > 1:
+                    print("unpairing");
+                    await device.unpair();
+                if tries > 5:
+                    print("waiting 5 seconds");
+                    await asyncio.sleep(5);
 
-            print("connecting");
-            await device.connect();
+                print("connecting");
+                async with asyncio.timeout(10):
+                    await device.connect();
+            except BleakDeviceNotFoundError:
+                foundDevice = await find_device(True);
+            except Exception as e:
+                print(e);
+
+            tries += 1;
 
     return device;
 
@@ -57,9 +68,13 @@ async def ble_main():
             raise ValueError("Heart-rate characteristic not found.");
 
         while device.is_connected:
-            data = await device.read_gatt_char(heart_rate_char);
-            global heart_rate;
-            heart_rate = data[1];
+            try:
+                data = await device.read_gatt_char(heart_rate_char);
+                global heart_rate;
+                heart_rate = data[1];
+                print(heart_rate);
+            except:
+                await device.disconnect();
             await asyncio.sleep(1);
 
         await device.disconnect();
