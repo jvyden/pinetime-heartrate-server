@@ -1,12 +1,14 @@
 import asyncio
 from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
+from websockets.asyncio.server import ServerConnection, serve
 
 HEART_RATE_UUID = "00002a37-0000-1000-8000-00805f9b34fb";
 
 scanner = BleakScanner(service_uuids=[HEART_RATE_UUID]);
 
-heart_rate = 0;
+global heart_rate;
+heart_rate = -1;
 
 # print(scanner.backend_id);
 
@@ -48,6 +50,7 @@ async def ble_main():
 
     while device == None or not device.is_connected:
         device = await connect();
+        print("connected")
 
         heart_rate_char = device.services.get_characteristic(HEART_RATE_UUID);
         if heart_rate_char == None:
@@ -55,13 +58,30 @@ async def ble_main():
 
         while device.is_connected:
             data = await device.read_gatt_char(heart_rate_char);
+            global heart_rate;
             heart_rate = data[1];
-            print(heart_rate);
             await asyncio.sleep(1);
 
         await device.disconnect();
 
+async def ws_client(websocket: ServerConnection):
+    last_heart_rate = -1;
+    while websocket.close_code == None:
+        await websocket.ping();
+
+        if heart_rate == last_heart_rate:
+            await asyncio.sleep(1);
+            continue;
+        last_heart_rate = heart_rate;
+
+        await websocket.send(str(heart_rate), text=True);
+        await asyncio.sleep(1);
+
+async def ws_main():
+    async with serve(ws_client, "localhost", 8765) as server:
+        await server.serve_forever();
+
 async def main():
-    await asyncio.gather(ble_main());
+    await asyncio.gather(ble_main(), ws_main());
 
 asyncio.run(main());
