@@ -19,6 +19,14 @@ Is it my problem? No.
 
 Can't you just shove whoever's reading your data away because they're within 3 feet? Yeah.
 
+## Configuration
+
+You can change a couple things through environment variables.
+
+- **`HOST`**: The address to host the WebSocket server on. Default is `localhost`.
+- **`PORT`**: The port to host the WebSocket server on. Default is `8765`.
+- **`DEVICE_NAME`**: The name of the Bluetooth device to scan for. Default is `InfiniTime`.
+
 ## Dependencies
 
 All dependencies should be cross-platform.
