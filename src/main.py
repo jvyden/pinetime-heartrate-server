@@ -1,3 +1,4 @@
+import os
 import asyncio
 from pathlib import Path
 from bleak import BleakClient, BleakScanner
@@ -7,6 +8,9 @@ from websockets.asyncio.server import ServerConnection, serve
 
 HEART_RATE_UUID = "00002a37-0000-1000-8000-00805f9b34fb";
 LAST_ADDRESS = Path("lastaddress.txt");
+DEVICE_NAME = os.environ.get("DEVICE_NAME", "InfiniTime");
+HOST = os.environ.get("HOST", "localhost");
+PORT = int(os.environ.get("PORT", "8765"));
 
 scanner = BleakScanner(service_uuids=[HEART_RATE_UUID]);
 
@@ -24,8 +28,8 @@ async def find_device(skip_existing: bool) -> BLEDevice | str:
 
     foundDevice = None;
     while foundDevice == None:
-        print("scanning for device");
-        foundDevice = await scanner.find_device_by_name("InfiniTime");
+        print("scanning for % s" % DEVICE_NAME);
+        foundDevice = await scanner.find_device_by_name(DEVICE_NAME);
 
     print("found device % s" % foundDevice.address);
 
@@ -104,7 +108,8 @@ async def ws_client(websocket: ServerConnection):
         await asyncio.sleep(1);
 
 async def ws_main():
-    async with serve(ws_client, "localhost", 8765) as server:
+    print("hosting websocket server on % s:% s" % (HOST, PORT))
+    async with serve(ws_client, HOST, PORT) as server:
         await server.serve_forever();
 
 async def main():
