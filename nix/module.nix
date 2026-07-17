@@ -21,7 +21,12 @@ in
       default = 8765;
       description = "The port to host the WebSocket server on.";
     };
-    device_name = lib.mkOption {
+    openFirewall = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Whether to open the required firewall ports in the firewall.";
+    };
+    deviceName = lib.mkOption {
       type = lib.types.str;
       default = "InfiniTime";
       description = "The name of the Bluetooth device to scan for.";
@@ -43,6 +48,12 @@ in
         ExecStart = "${cfg.package}/bin/pinetime-heartrate-server";
         Restart = "always";
         RestartSec = 5;
+
+        Environment = {
+          HOST = cfg.host;
+          PORT = cfg.port;
+          DEVICE_NAME = cfg.deviceName;
+        };
 
         User = baseNameOf dataDir;
         Group = baseNameOf dataDir;
@@ -80,6 +91,10 @@ in
       group = baseNameOf dataDir;
       home = dataDir;
       isSystemUser = true;
+    };
+
+    networking.firewall = lib.mkIf cfg.openFirewall {
+      allowedTCPPorts = [ cfg.port ];
     };
   };
 }
