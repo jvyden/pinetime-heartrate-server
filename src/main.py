@@ -1,10 +1,12 @@
 import asyncio
+from pathlib import Path
 from bleak import BleakClient, BleakScanner
 from bleak.backends.device import BLEDevice
 from bleak.exc import BleakDeviceNotFoundError
 from websockets.asyncio.server import ServerConnection, serve
 
 HEART_RATE_UUID = "00002a37-0000-1000-8000-00805f9b34fb";
+LAST_ADDRESS = Path("lastaddress.txt");
 
 scanner = BleakScanner(service_uuids=[HEART_RATE_UUID]);
 
@@ -12,14 +14,23 @@ global heart_rate;
 heart_rate = -1;
 
 async def find_device(skip_existing: bool) -> BLEDevice | str:
-    if not skip_existing:
-        return "D9:BE:F4:B9:29:0A"; # TODO: read from file
+    if not skip_existing and LAST_ADDRESS.exists():
+        file = LAST_ADDRESS.open("r");
+        last_address = file.readline();
+        print("attempting existing device % s" % last_address)
+        if len(last_address) > 0:
+            return last_address.strip();
 
-    print("scanning for device!");
 
     foundDevice = None;
     while foundDevice == None:
+        print("scanning for device");
         foundDevice = await scanner.find_device_by_name("InfiniTime");
+
+    print("found device % s" % foundDevice.address);
+
+    file = LAST_ADDRESS.open("w");
+    file.write(foundDevice.address)
 
     return foundDevice;
 
