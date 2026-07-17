@@ -15,5 +15,9 @@
         ]))
       ];
     };
+
+    # TODO: all architectures
+    packages.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.callPackage ./nix/package.nix {};
+    nixosModules.default = import ./nix/module.nix;
   };
 }
