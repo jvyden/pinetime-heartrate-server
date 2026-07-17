@@ -28,7 +28,7 @@ stdenvNoCC.mkDerivation {
     mkdir -pv $out/src
     cp -rv $src/* $out/src
     makeWrapper ${python}/bin/python3 $out/bin/pinetime-heartrate-server \
-      --add-flags "$out/src/main.py"
+      --add-flags "-u $out/src/main.py"
 
     ls -lAh $out
   '';
