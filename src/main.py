@@ -82,12 +82,16 @@ async def ble_main():
         if heart_rate_char == None:
             raise ValueError("Heart-rate characteristic not found.");
 
+        last_heart_rate = -1;
         while device.is_connected:
             try:
                 data = await device.read_gatt_char(heart_rate_char);
                 global heart_rate;
                 heart_rate = data[1];
-                print(heart_rate);
+                if last_heart_rate != heart_rate:
+                    print("% sBPM" % heart_rate);
+
+                last_heart_rate = heart_rate;
             except:
                 await device.disconnect();
             await asyncio.sleep(1);
