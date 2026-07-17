@@ -42,18 +42,18 @@ in
       after = [ "bluetooth.target" ];
       wantedBy = [ "multi-user.target" ];
 
+      environment = {
+        HOST = cfg.host;
+        PORT = cfg.port;
+        DEVICE_NAME = cfg.deviceName;
+      };
+
       unitConfig = {};
       serviceConfig = {
         Type = "simple";
         ExecStart = "${cfg.package}/bin/pinetime-heartrate-server";
         Restart = "always";
         RestartSec = 5;
-
-        Environment = {
-          HOST = cfg.host;
-          PORT = cfg.port;
-          DEVICE_NAME = cfg.deviceName;
-        };
 
         User = baseNameOf dataDir;
         Group = baseNameOf dataDir;
