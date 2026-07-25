@@ -7,6 +7,8 @@ from bleak.backends.device import BLEDevice
 from bleak.exc import BleakDeviceNotFoundError
 from websockets.asyncio.server import ServerConnection, serve
 
+from state import State
+
 HEART_RATE_UUID = "00002a37-0000-1000-8000-00805f9b34fb";
 LAST_ADDRESS = Path("lastaddress.txt");
 DEVICE_NAME = os.environ.get("DEVICE_NAME", "InfiniTime");
@@ -14,9 +16,6 @@ HOST = os.environ.get("HOST", "localhost");
 PORT = int(os.environ.get("PORT", "8765"));
 
 scanner = BleakScanner(service_uuids=[HEART_RATE_UUID]);
-
-global heart_rate;
-heart_rate = -1;
 
 async def find_device(skip_existing: bool) -> BLEDevice | str:
     if not skip_existing and LAST_ADDRESS.exists():
@@ -72,7 +71,7 @@ async def connect() -> BleakClient:
 
     return device;
 
-async def ble_main():
+async def ble_main(state: State):
     device: BleakClient | None = None;
 
     while device == None or not device.is_connected:
@@ -87,37 +86,44 @@ async def ble_main():
         while device.is_connected:
             try:
                 data = await device.read_gatt_char(heart_rate_char);
-                global heart_rate;
-                heart_rate = data[1];
-                if last_heart_rate != heart_rate:
-                    print(f"{heart_rate}BPM");
+                state.heart_rate = data[1];
+                if last_heart_rate != state.heart_rate:
+                    print(f"{state.heart_rate}BPM");
 
-                last_heart_rate = heart_rate;
+                last_heart_rate = state.heart_rate;
             except:
                 await device.disconnect();
             await asyncio.sleep(1);
 
         await device.disconnect();
 
+STATE: State = State();
+
 async def ws_client(websocket: ServerConnection):
+    global STATE;
     last_heart_rate = -1;
     while websocket.close_code == None:
         await websocket.ping();
 
-        if heart_rate == last_heart_rate:
+        if STATE.heart_rate == last_heart_rate:
             await asyncio.sleep(1);
             continue;
-        last_heart_rate = heart_rate;
+        last_heart_rate = STATE.heart_rate;
 
-        await websocket.send(str(heart_rate), text=True);
+        await websocket.send(str(STATE.heart_rate), text=True);
         await asyncio.sleep(1);
 
-async def ws_main():
+async def ws_main(state: State):
+    global STATE;
+    STATE = state;
+
     print(f"hosting websocket server on {HOST}:{PORT}")
+
     async with serve(ws_client, HOST, PORT) as server:
         await server.serve_forever();
 
 async def main():
-    await asyncio.gather(ble_main(), ws_main());
+    state = State();
+    await asyncio.gather(ble_main(state), ws_main(state));
 
 asyncio.run(main());
