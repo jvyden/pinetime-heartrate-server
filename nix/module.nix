@@ -51,6 +51,7 @@ in
       unitConfig = {};
       serviceConfig = {
         Type = "simple";
+        ExecStartPre = "${pkgs.coreutils}/bin/sleep 3s"; # give bluetooth some time to start up and initialize fully
         ExecStart = "${cfg.package}/bin/pinetime-heartrate-server";
         Restart = "always";
         RestartSec = 5;
