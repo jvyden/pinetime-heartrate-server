@@ -1,6 +1,7 @@
-import os
 import asyncio
+import os
 from pathlib import Path
+
 from bleak import BleakClient, BleakScanner
 from bleak.backends.device import BLEDevice
 from bleak.exc import BleakDeviceNotFoundError
@@ -19,22 +20,22 @@ heart_rate = -1;
 
 async def find_device(skip_existing: bool) -> BLEDevice | str:
     if not skip_existing and LAST_ADDRESS.exists():
-        file = LAST_ADDRESS.open("r");
-        last_address = file.readline();
-        print("attempting existing device % s" % last_address)
-        if len(last_address) > 0:
-            return last_address.strip();
+        with LAST_ADDRESS.open("r") as file:
+            last_address = file.readline();
+            print(f"attempting existing device {last_address}")
+            if len(last_address) > 0:
+                return last_address.strip();
 
 
     foundDevice = None;
     while foundDevice == None:
-        print("scanning for % s" % DEVICE_NAME);
+        print(f"scanning for {DEVICE_NAME}");
         foundDevice = await scanner.find_device_by_name(DEVICE_NAME);
 
-    print("found device % s" % foundDevice.address);
+    print(f"found device {foundDevice.address}");
 
-    file = LAST_ADDRESS.open("w");
-    file.write(foundDevice.address)
+    with LAST_ADDRESS.open("w") as file:
+        file.write(foundDevice.address)
 
     return foundDevice;
 
@@ -89,7 +90,7 @@ async def ble_main():
                 global heart_rate;
                 heart_rate = data[1];
                 if last_heart_rate != heart_rate:
-                    print("% sBPM" % heart_rate);
+                    print(f"{heart_rate}BPM");
 
                 last_heart_rate = heart_rate;
             except:
@@ -112,7 +113,7 @@ async def ws_client(websocket: ServerConnection):
         await asyncio.sleep(1);
 
 async def ws_main():
-    print("hosting websocket server on % s:% s" % (HOST, PORT))
+    print(f"hosting websocket server on {HOST}:{PORT}")
     async with serve(ws_client, HOST, PORT) as server:
         await server.serve_forever();
 
