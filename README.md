@@ -32,4 +32,4 @@ You can change a couple things through environment variables.
 All dependencies should be cross-platform.
 
 - **Bleak**: Bluetooth LE library.
-- **Websockets**: Hosts the websocket server.
+- **aiohttp**: Hosts the websocket/website server.

@@ -11,7 +11,7 @@
       packages = with nixpkgs.legacyPackages.x86_64-linux; [
         (python3.withPackages (python-pkgs: with python-pkgs; [
           bleak
-          websockets
+          aiohttp
         ]))
       ];
     };

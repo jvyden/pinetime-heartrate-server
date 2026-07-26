@@ -8,7 +8,7 @@ let
   python = (pkgs.python3.withPackages (
     python-pkgs: with python-pkgs; [
       bleak
-      websockets
+      aiohttp
     ]
   ));
 in
