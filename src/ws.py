@@ -1,10 +1,12 @@
 import asyncio
+from pathlib import Path
 
 from aiohttp import web
 
 from state import State
 
 STATE: State = State();
+STATIC = Path(__file__).parent / "static";
 
 async def handle_root(request: web.Request):
     if request.headers.get("Upgrade", "").lower() == "websocket":
@@ -25,7 +27,7 @@ async def handle_root(request: web.Request):
 
         return websocket
     else:
-        return web.Response(status=204);
+        return web.FileResponse(STATIC / "index.html")
 
 async def start_server(app: web.Application, state: State):
     runner = web.AppRunner(app);
@@ -42,6 +44,7 @@ async def host_ws_server(state: State):
 
     app = web.Application();
     app.router.add_route("*", "/", handle_root);
+    app.router.add_static("/static/", path=STATIC, name="static")
 
     print(f"hosting websocket server on {state.HOST}:{state.PORT}")
 

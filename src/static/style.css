@@ -1,0 +1,21 @@
+html {
+    font-family: "Sans Serif";
+    text-align: center;
+    color: white;
+    background-color: black;
+}
+
+body {
+    background-color: #0f0f0f;
+    width: fit-content;
+    margin: auto;
+    padding: 0 10px 1px 10px;
+}
+
+a, #heartrate {
+    color: #8c64ddff;
+}
+
+noscript {
+    color: red;
+}
