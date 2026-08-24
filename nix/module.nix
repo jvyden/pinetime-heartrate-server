@@ -11,6 +11,12 @@ in
       default = pkgs.callPackage ./package.nix {};
     };
 
+    openFirewall = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Whether to open the required firewall ports in the firewall.";
+    };
+
     host = lib.mkOption {
       type = lib.types.str;
       default = "localhost";
@@ -21,10 +27,25 @@ in
       default = 8765;
       description = "The port to host the WebSocket server on.";
     };
-    openFirewall = lib.mkOption {
+    webEnable = lib.mkOption {
       type = lib.types.bool;
-      default = false;
-      description = "Whether to open the required firewall ports in the firewall.";
+      default = true;
+      description = "Whether to enable websockets and the web interface.";
+    };
+    oscEnable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether to enable OSC sending support.";
+    };
+    oscHost = lib.mkOption {
+      type = lib.types.str;
+      default = "127.0.0.1";
+      description = "The address to send the OSC data to.";
+    };
+    oscPort = lib.mkOption {
+      type = lib.types.int;
+      default = 9000;
+      description = "The port to send the OSC data to.";
     };
     deviceName = lib.mkOption {
       type = lib.types.str;
@@ -46,6 +67,10 @@ in
         HOST = cfg.host;
         PORT = toString cfg.port;
         DEVICE_NAME = cfg.deviceName;
+        WEB_ENABLE = toString cfg.webEnable;
+        OSC_ENABLE = toString cfg.oscEnable;
+        OSC_HOST = cfg.oscHost;
+        OSC_PORT = toString cfg.oscPort;
       };
 
       unitConfig = {};

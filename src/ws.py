@@ -42,6 +42,9 @@ async def host_ws_server(state: State):
     global STATE;
     STATE = state;
 
+    if not state.WEB_ENABLE:
+        return
+
     app = web.Application();
     app.router.add_route("*", "/", handle_root);
     app.router.add_static("/static/", path=STATIC, name="static")
