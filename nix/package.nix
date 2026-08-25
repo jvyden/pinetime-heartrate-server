@@ -9,6 +9,7 @@ let
     python-pkgs: with python-pkgs; [
       bleak
       aiohttp
+      python-osc
     ]
   ));
 in
