@@ -1,4 +1,5 @@
 import asyncio
+import time
 from pathlib import Path
 
 from bleak import BleakClient, BleakScanner
@@ -86,6 +87,7 @@ async def run(state: State):
                     print(f"{state.heart_rate}BPM");
 
                 last_heart_rate = state.heart_rate;
+                state.last_valid_contact = time.time();
             except:
                 await device.disconnect();
             await asyncio.sleep(1);
