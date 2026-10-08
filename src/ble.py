@@ -83,6 +83,8 @@ async def run(state: State):
 
         await align_polling(device, state, heart_rate_char);
 
+        sleep_target = time.time();
+
         # actual polling loop
         while device.is_connected:
             try:
@@ -91,11 +93,14 @@ async def run(state: State):
             except:
                 await device.disconnect();
 
-            await asyncio.sleep(1);
+            sleep_target += 1;
+
+            await asyncio.sleep(sleep_target - time.time());
 
         await device.disconnect();
 
 async def poll_hr(device: BleakClient, state: State, char):
+    # print("poll");
     data = await device.read_gatt_char(char);
     state.heart_rate = data[1];
 
