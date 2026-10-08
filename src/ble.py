@@ -78,21 +78,50 @@ async def run(state: State):
         if heart_rate_char == None:
             raise ValueError("Heart-rate characteristic not found.");
 
-        last_heart_rate = -1;
+        if not device.is_connected:
+            return;
+
+        await align_polling(device, state, heart_rate_char);
+
+        # actual polling loop
         while device.is_connected:
             try:
-                data = await device.read_gatt_char(heart_rate_char);
-                state.heart_rate = data[1];
-                if last_heart_rate != state.heart_rate:
-                    print(f"{state.heart_rate}BPM");
-
-                last_heart_rate = state.heart_rate;
-                state.last_valid_contact = time.time();
+                await poll_hr(device, state, heart_rate_char);
+                state.last_heart_rate = state.heart_rate;
             except:
                 await device.disconnect();
 
-            state.update_event.set();
-            state.update_event.clear();
             await asyncio.sleep(1);
 
         await device.disconnect();
+
+async def poll_hr(device: BleakClient, state: State, char):
+    data = await device.read_gatt_char(char);
+    state.heart_rate = data[1];
+
+    state.update_event.set();
+    state.update_event.clear();
+
+    if state.last_heart_rate != state.heart_rate:
+        print(f"{state.heart_rate}BPM");
+
+    state.last_valid_contact = time.time();
+
+async def align_polling(device: BleakClient, state: State, char):
+    print("fast polling until aligned to reduce latency")
+
+    align_start = time.time();
+
+    # get an initial hr value in
+    await poll_hr(device, state, char);
+    state.last_heart_rate = state.heart_rate;
+
+    # poll as fast as possible until we get an update
+    # this should reduce latency a bit by aligning us when the heart scanner updates on the watch
+    # but in doing so still not polling aggressively
+    while time.time() - align_start < 15:
+        await poll_hr(device, state, char);
+        if state.last_heart_rate != state.heart_rate:
+            return
+
+    print("giving up on fast polling, there will be a bit more delay in heart rate changes");

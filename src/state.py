@@ -4,6 +4,7 @@ import os
 
 class State:
     # dynamic state
+    last_heart_rate: int = -1;
     heart_rate: int = -1;
     last_valid_contact: float = 0;
 
