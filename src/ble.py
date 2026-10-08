@@ -90,6 +90,9 @@ async def run(state: State):
                 state.last_valid_contact = time.time();
             except:
                 await device.disconnect();
+
+            state.update_event.set();
+            state.update_event.clear();
             await asyncio.sleep(1);
 
         await device.disconnect();

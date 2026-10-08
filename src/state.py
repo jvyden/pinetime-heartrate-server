@@ -1,10 +1,13 @@
-import time
-import os;
+import asyncio
+import os
+
 
 class State:
     # dynamic state
     heart_rate: int = -1;
     last_valid_contact: float = 0;
+
+    update_event: asyncio.Event = asyncio.Event();
 
     # configuration
     DEVICE_NAME = os.environ.get("DEVICE_NAME", "InfiniTime");

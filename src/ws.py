@@ -23,7 +23,7 @@ async def handle_root(request: web.Request):
             last_heart_rate = STATE.heart_rate;
 
             await websocket.send_str(str(STATE.heart_rate));
-            await asyncio.sleep(1);
+            await STATE.update_event.wait();
 
         return websocket
     else:
